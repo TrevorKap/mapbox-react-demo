@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react"; // ← add React
 import ReactMapGL, { Marker, Popup } from "react-map-gl";
-import "mapbox-gl/dist/mapbox-gl.css"; // keep this for proper map rendering
+import "mapbox-gl/dist/mapbox-gl.css";
 import * as parkDate from "./data/skateboard-parks.json";
 
 export default function App() {
@@ -11,31 +11,33 @@ export default function App() {
     height: "100vh",
     zoom: 10
   });
-
   const [selectedPark, setSelectedPark] = useState(null);
 
   useEffect(() => {
-    const listener = (e) => {
-      if (e.key === "Escape") setSelectedPark(null);
+    const listener = e => {
+      if (e.key === "Escape") {
+        setSelectedPark(null);
+      }
     };
     window.addEventListener("keydown", listener);
-    return () => window.removeEventListener("keydown", listener);
-  }, []);
 
-  // Sanity check — should NOT be undefined if .env.local is set correctly
-  console.log("TOKEN", process.env.REACT_APP_MAPBOX_TOKEN);
+    return () => {
+      window.removeEventListener("keydown", listener);
+    };
+  }, []);
+  console.log('TOKEN', process.env.REACT_APP_MAPBOX_TOKEN);
 
   return (
     <div>
       <ReactMapGL
         {...viewport}
-        // test with a public style first if your custom one doesn't show:
-        // mapStyle="mapbox://styles/mapbox/streets-v12"
         mapStyle="mapbox://styles/ghernandezd/cmfabck50006201rw11b7d8fd"
         mapboxApiAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
-        onViewportChange={(next) => setViewport(next)}
+        onViewportChange={viewport => {
+          setViewport(viewport);
+        }}
       >
-        {parkDate.features && parkDate.features.map((park) => (
+        {parkDate.features.map(park => (
           <Marker
             key={park.properties.PARK_ID}
             latitude={park.geometry.coordinates[1]}
@@ -43,7 +45,7 @@ export default function App() {
           >
             <button
               className="marker-btn"
-              onClick={(e) => {
+              onClick={e => {
                 e.preventDefault();
                 setSelectedPark(park);
               }}
@@ -53,19 +55,21 @@ export default function App() {
           </Marker>
         ))}
 
-        {selectedPark && (
+        {selectedPark ? (
           <Popup
             latitude={selectedPark.geometry.coordinates[1]}
             longitude={selectedPark.geometry.coordinates[0]}
-            onClose={() => setSelectedPark(null)}
+            onClose={() => {
+              setSelectedPark(null);
+            }}
           >
             <div>
               <h2>{selectedPark.properties.NAME}</h2>
               <p>{selectedPark.properties.DESCRIPTIO}</p>
             </div>
           </Popup>
-        )}
+        ) : null}
       </ReactMapGL>
-    </div>
-  );
+    </div> 
+  );  
 }

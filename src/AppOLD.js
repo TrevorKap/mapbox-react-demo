@@ -1,41 +1,37 @@
 import React, { useState, useEffect } from "react";
-import ReactMapGL, { Marker, Popup } from "react-map-gl";
-import "mapbox-gl/dist/mapbox-gl.css"; // keep this for proper map rendering
-import * as parkDate from "./data/skateboard-parks.json";
+import Map, { Marker, Popup } from "react-map-gl";
+import "mapbox-gl/dist/mapbox-gl.css"; // important for layout
+import * as parkData from "./data/skateboard-parks.json"; // (typo: Data, not Date)
+
+/* Make sure .env.local has:
+   REACT_APP_MAPBOX_TOKEN=pk.ey...
+   and you restarted `npm start` after creating/editing it.
+*/
 
 export default function App() {
-  const [viewport, setViewport] = useState({
-    latitude: 45.4211,
-    longitude: -75.6903,
-    width: "100vw",
-    height: "100vh",
-    zoom: 10
-  });
-
   const [selectedPark, setSelectedPark] = useState(null);
+  const [viewState, setViewState] = useState({
+    latitude: 45.4211,
+longitude: -75.6903,
+    zoom: 10
+});
 
   useEffect(() => {
-    const listener = (e) => {
-      if (e.key === "Escape") setSelectedPark(null);
-    };
-    window.addEventListener("keydown", listener);
-    return () => window.removeEventListener("keydown", listener);
+    const onEsc = (e) => e.key === "Escape" && setSelectedPark(null);
+    window.addEventListener("keydown", onEsc);
+return () => window.removeEventListener("keydown", onEsc);
   }, []);
 
-  // Sanity check — should NOT be undefined if .env.local is set correctly
-  console.log("TOKEN", process.env.REACT_APP_MAPBOX_TOKEN);
-
   return (
-    <div>
-      <ReactMapGL
-        {...viewport}
-        // test with a public style first if your custom one doesn't show:
-        // mapStyle="mapbox://styles/mapbox/streets-v12"
+    <div style={{ width: "100vw", height: "100vh" }}>
+      <Map
+        initialViewState={viewState}
+        onMove={(evt) => setViewState(evt.viewState)}
+        style={{ width: "100%", height: "100%" }}
         mapStyle="mapbox://styles/ghernandezd/cmfabck50006201rw11b7d8fd"
-        mapboxApiAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
-        onViewportChange={(next) => setViewport(next)}
+        mapboxAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
       >
-        {parkDate.features && parkDate.features.map((park) => (
+        {parkData.features.map((park) => (
           <Marker
             key={park.properties.PARK_ID}
             latitude={park.geometry.coordinates[1]}
@@ -65,7 +61,7 @@ export default function App() {
             </div>
           </Popup>
         )}
-      </ReactMapGL>
+      </Map>
     </div>
   );
 }
