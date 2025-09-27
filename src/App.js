@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import ReactMapGL, { Marker, Popup } from "react-map-gl";
 import "mapbox-gl/dist/mapbox-gl.css"; // keep this for proper map rendering
 import * as parkDate from "./data/skateboard-parks.json";
 
+// Style configuration: try custom, fall back to baseline if it errors
+const BASELINE_STYLE = "mapbox://styles/mapbox/streets-v11";
+const CUSTOM_STYLE = process.env.REACT_APP_MAPBOX_STYLE_URL;
+
 export default function App() {
+  const mapRef = useRef();
   const [viewport, setViewport] = useState({
     latitude: 45.4211,
     longitude: -75.6903,
@@ -13,6 +18,7 @@ export default function App() {
   });
 
   const [selectedPark, setSelectedPark] = useState(null);
+  const [activeStyle, setActiveStyle] = useState(CUSTOM_STYLE || BASELINE_STYLE);
 
   useEffect(() => {
     const listener = (e) => {
@@ -23,15 +29,30 @@ export default function App() {
   }, []);
 
   // Sanity check — should NOT be undefined if .env.local is set correctly
-  console.log("TOKEN", process.env.REACT_APP_MAPBOX_TOKEN);
+  //console.log("TOKEN", process.env.REACT_APP_MAPBOX_TOKEN);
+
+  // If the custom style fails to load for any reason, switch to baseline once
+  useEffect(() => {
+    const map = mapRef.current && mapRef.current.getMap && mapRef.current.getMap();
+    if (!map) return;
+    const handleError = (e) => {
+      // Only fallback if we are currently trying the custom style
+      if (activeStyle === CUSTOM_STYLE) {
+        setActiveStyle(BASELINE_STYLE);
+      }
+    };
+    map.on("error", handleError);
+    return () => {
+      map.off("error", handleError);
+    };
+  }, [activeStyle]);
 
   return (
     <div>
       <ReactMapGL
+        ref={mapRef}
         {...viewport}
-        // test with a public style first if your custom one doesn't show:
-        // mapStyle="mapbox://styles/mapbox/streets-v12"
-        mapStyle="mapbox://styles/ghernandezd/cmfabck50006201rw11b7d8fd"
+        mapStyle={activeStyle}
         mapboxApiAccessToken={process.env.REACT_APP_MAPBOX_TOKEN}
         onViewportChange={(next) => setViewport(next)}
       >
