@@ -3,6 +3,11 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
+import mapboxgl from 'mapbox-gl';
+
+// Ensure Mapbox GL uses the non-transpiled worker to avoid Babel issues.
+// eslint-disable-next-line global-require
+mapboxgl.workerClass = require('mapbox-gl/dist/mapbox-gl-csp-worker').default;
 
 ReactDOM.render(<App />, document.getElementById('root'));
 
